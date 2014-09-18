@@ -1,0 +1,135 @@
+#!/bin/bash
+# xtt: Xmonad testing tool
+# Based on awmtt script (https://github.com/mikar/awmtt)
+
+
+UTIL_NAME=$(basename "${0}")
+
+
+usage() {
+  cat <<EOF
+Usage: $UTIL_NAME COMMAND [OPTION]...
+Xmonad testing script. Runs xmonad in Xephyr session.
+
+Commands
+  start     start xmonad session
+  stop      stop xmonad session
+  restart   restart running xmonad session
+  exec CMD  execute command in nexted xmonad
+
+Options
+  -s, --size SIZE     set window size
+  -h, --help          show this help
+EOF
+}
+
+
+xmonad_pid() {
+    pgrep -fn "xmonad"
+}
+xephyr_pid() {
+    pgrep -f xephyr_$D;
+}
+
+err () {
+    echo $UTIL_NAME: "$1" >& 2
+    exit 1
+}
+
+
+D=1
+WINDOW_SIZE=800x600
+XMONAD=$(which xmonad)
+XEPHYR=$(which Xephyr)
+[[ -x "$XMONAD" ]] || err 'Xmonad is not installed'
+[[ -x "$XEPHYR" ]] || err 'Xephyr is not installed'
+
+
+start () {
+    if [ -f "/tmp/.X1-lock" ]; then
+        err "Display :1 is busy"
+    fi
+
+    "$XEPHYR" -name xephyr_$D -ac -br -noreset -screen "$WINDOW_SIZE" :$D >/dev/null 2>&1 &
+    if [ $? -ne 0 ]; then
+        err "xephyr failed to start"
+    fi
+
+    sleep 0.2
+    DISPLAY=:$D.0 "$XMONAD" &
+    if [ $? -ne 0 ]; then
+        err "xmonad failed to start"
+    fi
+
+    sleep 0.2
+
+    echo "Display: $D, Xmonad PID: $(xmonad_pid), Xephyr PID: $(xephyr_pid)"
+}
+
+stop () {
+    killall $XEPHYR > /dev/null
+}
+
+# Restart only xmonad, do not touch runnin xephyr
+restart () {
+    $XMONAD --restart
+}
+
+exec_cmd () {
+    DISPLAY=:$D $@ &
+}
+
+
+# Read the options
+TEMP=`getopt -o s:h --long size:,help -n $UTIL_NAME -- "$@"`
+eval set -- "$TEMP"
+
+while true; do
+    case $1 in
+        -s|--size)
+            WINDOW_SIZE=$2
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            err "command line parsing"
+            exit 1
+            ;;
+    esac
+done
+
+
+# Command extraction
+if [ "$#" -lt 1 ]; then
+    usage
+    exit 0
+fi
+COMMAND=$1
+
+case $COMMAND in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        restart
+        ;;
+    exec)
+        if [ "$#" -lt 2 ]; then
+            err "no exec command specified. Look --help for details"
+        fi
+        shift
+        exec_cmd $@
+        ;;
+    *)
+        err "unknown command $COMMAND"
+esac
