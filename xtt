@@ -41,8 +41,8 @@ D=1
 WINDOW_SIZE=800x600
 XMONAD=$(which xmonad)
 XEPHYR=$(which Xephyr)
-[[ -x "$XMONAD" ]] || err 'Xmonad is not installed'
-[[ -x "$XEPHYR" ]] || err 'Xephyr is not installed'
+[ -x "$XMONAD" ] || err 'Xmonad is not installed'
+[ -x "$XEPHYR" ] || err 'Xephyr is not installed'
 
 
 start () {
