@@ -1,0 +1,17 @@
+#compdef xtt
+
+_xtt () {
+    local -a commands
+    commands=(
+        'start:start nested xmonad session'
+        'stop:stop running xmonad sessions'
+        'restart:request running xmonad to restart'
+        'exec:execute command in running xmonad session'
+    )
+
+    _describe -t commands 'commands' commands
+
+    return 0
+}
+
+_xtt
