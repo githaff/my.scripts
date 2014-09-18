@@ -1,6 +1,6 @@
 #!/bin/bash
 # xtt: Xmonad testing tool
-# Based on awmtt script (https://github.com/mikar/awmtt)
+# Inspired by awmtt script (https://github.com/mikar/awmtt)
 
 
 UTIL_NAME=$(basename "${0}")
